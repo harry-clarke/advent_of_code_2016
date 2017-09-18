@@ -1,4 +1,4 @@
-module Lesson_2 where
+module Puzzle_2 where
 
 import System.IO
 import Data.List

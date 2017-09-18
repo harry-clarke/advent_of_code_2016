@@ -1,4 +1,4 @@
-module Lesson_1 where
+module Puzzle_1 where
 
 import Data.Maybe
 import Data.List
