@@ -29,6 +29,17 @@ parseMessage s =
   let ('[':chk') = dropLast 1 chk in
   (m' , read sid , chk')
 
+decryptChar :: Int -> Char -> Char
+decryptChar 0 c = c
+decryptChar _ '-' = ' '
+decryptChar i 'z' = decryptChar (i-1) 'a'
+decryptChar i c | i >= 26 = decryptChar (i `mod` 26) c
+decryptChar i c | d <- ord 'z' - ord c, d<i = decryptChar (i-d-1) 'a'
+decryptChar i c = chr(ord c + i)
+
+decrypt :: Message -> Message
+decrypt (m , sid , chk) = (map (decryptChar sid) m , sid , chk)
+
 main :: IO ()
 main = do
   handle <- openFile "input.txt" ReadMode
@@ -37,5 +48,7 @@ main = do
   let m = map parseMessage l
   let v = filter isValid m
   let s = sum $ map (\(_,x,_) -> x) v
+  let d = filter (isInfixOf "north" . \(m,_,_) -> m) $ map decrypt v
   print s
+  print d
 
