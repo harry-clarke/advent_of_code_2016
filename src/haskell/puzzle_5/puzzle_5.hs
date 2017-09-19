@@ -13,15 +13,11 @@ hashAndHex :: String -> String
 hashAndHex = foldr (++) "" . map toHex . B.unpack . hash . C.pack
   where toHex = C.unpack . L.toStrict . toLazyByteString . word8HexFixed
 
+matchingHashes :: String -> [String]
+matchingHashes s = map (drop 5) $ filter ("00000" `isPrefixOf`) [hashAndHex m | i<-[0,1..], let m = s ++ show i]
+
 decrypt_1 :: String -> String
-decrypt_1 = reverse . decrypt_1' 0 ""
-  where
-    decrypt_1' :: Int -> String -> String -> String
-    decrypt_1' _ d _ | length d >= 8 = d
-    decrypt_1' i d s =
-      let hashStr = hashAndHex (s ++ show i) in
-      let d' = if "00000" `isPrefixOf` hashStr then (hashStr !! 5):d else d in
-      decrypt_1' (i+1) d' s
+decrypt_1 = foldr ((:) . (!! 0)) "" . take 8 . matchingHashes
 
 main :: IO ()
 main = do
