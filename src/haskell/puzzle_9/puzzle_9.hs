@@ -19,16 +19,13 @@ parseInstruction ('(':rest) =
 parseInstruction _ = Nothing
 
 convert :: String -> String
-convert = convert'
-  where
-    convert' :: String -> String
-    convert' "" = ""
-    convert' s
-      | Just ((span,count), rest) <- parseInstruction s =
-        let (sec , rest') = splitAt span rest in
-        let pre = take (length sec * count) $ cycle sec in
-        (pre ++ convert' rest')
-      | (c:cs) <- s = (c : convert' cs)
+convert "" = ""
+convert s
+  | Just ((span,count), rest) <- parseInstruction s =
+    let (sec , rest') = splitAt span rest in
+    let pre = take (length sec * count) $ cycle sec in
+    (pre ++ convert rest')
+  | (c:cs) <- s = (c : convert cs)
 
 main :: IO ()
 main = do
