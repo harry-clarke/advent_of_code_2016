@@ -15,20 +15,28 @@ updateBot (val1', _) bot@Bot{ val1 = Just val2' , val2 = Nothing } =
   let moves = [ (upper, upperId bot), (lower, lowerId bot)] in
   (bot{ val1 = Nothing, val2 = Nothing }, moves)
 
-runMove :: Move -> Env -> Env
-runMove (_, DestOut _) env = env
-runMove move@(_, DestBot id) (Env bots moves) =
-  let bot = fromJust $ M.lookup id bots in
-  let (bot', moves') = updateBot move bot in
-  Env (M.insert id bot bots) (moves' ++ moves)
   
+runMove :: Move -> State Env ()
+runMove (_, DestOut _) = return ()
+runMove move@(_, DestBot id) = do
+  (Env bots moves) <- get
+  let bot = fromJust $ M.lookup id bots
+  let (bot', moves') = updateBot move bot
+  put $ Env (M.insert id bot bots) (moves' ++ moves)
 
 
-run :: Env -> Env
-run env@(Env _ []) = env
-run env@(Env bots (m:ms)) = run $ runMove m (Env bots ms)
+
+run :: State Env ()
+run = do
+  env <- get
+  case env of
+    (Env _ []) -> return ()
+    (Env bots (m:ms)) -> do
+      put (Env bots ms)
+      runMove m >> run
 
 main :: IO ()
 main = do
   env <- Puzzle_10_Parser.readFile "input.txt"
-  print $ run env
+  let env' = execState run env
+  print env'
