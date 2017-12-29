@@ -8,20 +8,23 @@ import Control.Monad.Identity
 
 -- data Env = Env Bots StartingMoves
 
-updateBot :: Move -> Bot -> (Bot , Moves)
+type Updater m =
+  Move -> Bot -> m (Bot , Moves)
+
+updateBot :: Monad m => Updater m
 updateBot (val1', _) bot@Bot{ val1 = Nothing }=
-  (bot{ val1 = Just val1' }, [])
-updateBot (val1', _) bot@Bot{ val1 = Just val2' , val2 = Nothing } =
-  let (upper,lower) = if val1' > val2' then (val1', val2') else (val2', val1') in
-  let moves = [ (upper, upperId bot), (lower, lowerId bot)] in
-  (bot{ val1 = Nothing, val2 = Nothing }, moves)
+  return (bot{ val1 = Just val1' }, [])
+updateBot (val1', _) bot@Bot{ val1 = Just val2' , val2 = Nothing } = do
+  let (upper,lower) = if val1' > val2' then (val1', val2') else (val2', val1')
+  let moves = [ (upper, upperId bot), (lower, lowerId bot)]
+  return (bot{ val1 = Nothing, val2 = Nothing }, moves)
 
 runMove :: Monad m => Move -> StateT Env m ()
 runMove (_, DestOut _) = return ()
 runMove move@(_, DestBot id) = do
   (Env bots moves) <- get
   let bot = fromJust $ M.lookup id bots
-  let (bot', moves') = updateBot move bot
+  (bot', moves') <- updateBot move bot
   put $ Env (M.insert id bot bots) (moves' ++ moves)
 
 run :: Monad m => StateT Env m ()
