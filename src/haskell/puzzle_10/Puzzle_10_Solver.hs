@@ -7,18 +7,11 @@ import Data.Maybe
 import Control.Monad.State
 import Control.Monad.Identity
 
--- data Env = Env Bots StartingMoves
-
 type Updater m =
   Move -> Bot -> m (Bot , Moves)
 
 type Listener m =
   Destination -> Bot -> Moves -> m ()
-
-
-debug :: Listener IO
-debug (DestBot 146) b m = print $ show "Debug: " ++ show b ++ "\n" ++ show m
-debug _ _ _ = return ()
 
 part1 :: Listener IO
 part1 (DestBot id) _ ((17,_) : (61,_) : []) = print $ "Found: " ++ show id
@@ -36,39 +29,27 @@ updateBot l (val1', id) bot@Bot{ val1 = Just val2' , val2 = Nothing } = do
   l id bot' moves >> return (bot', moves)
 
 runMove :: Monad m => Updater m -> Move -> StateT Env m ()
-runMove _ (_, DestOut _) = return ()
+runMove _ (val, DestOut id) = modify $ \env -> env { envOuts = M.insertWith (++) id [val] (envOuts env) }
 runMove u move@(_, DestBot id) = do
-  (Env bots moves) <- get
+  (Env bots outs moves) <- get
   let bot = fromJust $ M.lookup id bots
   (bot', moves') <- lift $ u move bot
-  put $ Env (M.insert id bot' bots) (moves' ++ moves)
-
-runMove' :: Updater IO -> Move -> StateT Env IO ()
---runMove' u move = lift (print move) >> runMove u move
-runMove' = runMove
-
+  put $ Env (M.insert id bot' bots) outs (moves' ++ moves)
 
 run :: Monad m => Updater m -> StateT Env m ()
 run u = do
   env <- get
   case env of
-    (Env _ []) -> return ()
-    (Env bots (m:ms)) -> do
-      put (Env bots ms)
+    (Env _ _ []) -> return ()
+    (Env bots outs (m:ms)) -> do
+      put (Env bots outs ms)
       runMove u m >> run u
-
-run' :: Updater IO -> StateT Env IO ()
-run' u = do
-  env <- get
-  case env of
-    (Env _ []) -> return ()
-    (Env bots (m:ms)) -> do
-      put (Env bots ms)
-      runMove' u m >> run' u
 
 main :: IO ()
 main = do
-  let updater = run' (updateBot part1)
+  let updater = run (updateBot part1)
   env <- Puzzle_10_Parser.readFile "input.txt"
-  env' <- execStateT updater env
+  env'  <- execStateT updater env
+  let env'' = M.restrictKeys (envOuts env') (S.fromList [0, 1, 2])
+  print $ product (map product $ M.elems env'')
   print "Done"

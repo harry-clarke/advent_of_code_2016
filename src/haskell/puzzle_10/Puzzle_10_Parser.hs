@@ -22,11 +22,15 @@ data Bot = Bot {
 type Id = Int
 type Bots = M.Map Id Bot
 type BotDescription = (Id, Bot)
-
+type Outputs = M.Map Id [ Value ]
 type Move = (Value, Destination)
 type Moves = [Move]
 
-data Env = Env Bots Moves deriving (Show, Eq, Ord)
+data Env = Env
+  { envBots :: Bots
+  , envOuts :: Outputs
+  , envMoves :: Moves
+  } deriving (Show, Eq, Ord)
 
 readFile :: String -> IO Env
 readFile fileName = do
@@ -37,7 +41,7 @@ readFile fileName = do
 parseFile :: String -> Env
 parseFile str =
   let parsed = map parseLine $ lines str in
-  Env (M.fromList $ lefts parsed) (rights parsed)
+  Env (M.fromList $ lefts parsed) M.empty (rights parsed)
 
 parseLine :: String -> Either BotDescription Move
 parseLine str
