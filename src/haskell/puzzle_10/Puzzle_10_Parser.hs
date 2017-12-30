@@ -11,14 +11,14 @@ type Value = Int
 data Destination
   = DestBot Id
   | DestOut Id
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 data Bot = Bot {
   lowerId :: Destination, -- Lower Bot
   upperId :: Destination, -- Upper Bot
   val1 :: (Maybe Value), -- First Value
   val2 :: (Maybe Value) -- Second Value
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 type Id = Int
 type Bots = M.Map Id Bot
 type BotDescription = (Id, Bot)
@@ -26,7 +26,7 @@ type BotDescription = (Id, Bot)
 type Move = (Value, Destination)
 type Moves = [Move]
 
-data Env = Env Bots Moves deriving (Show, Eq)
+data Env = Env Bots Moves deriving (Show, Eq, Ord)
 
 readFile :: String -> IO Env
 readFile fileName = do
