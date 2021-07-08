@@ -17,8 +17,7 @@ streamToTriple (a:b:c:rest) = (a , b , c) : streamToTriple rest
 
 main :: IO ()
 main = do
-  handle <- openFile "input.txt" ReadMode
-  contents <- hGetContents handle
+  contents <- readFile "input.txt"
   let l = lines contents
   let p1 = map parseLine l
   let a1 = filter isTriangle p1
